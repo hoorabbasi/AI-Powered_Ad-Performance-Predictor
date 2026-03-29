@@ -201,7 +201,7 @@ if st.session_state.predicted_score is not None:
 # Generate AI Suggestions button (FIXED POSITION)
 # --------------------------------------------------
 if st.session_state.predicted_score is not None:
-
+    st.write("DEBUG:", st.session_state.predicted_score)      
     if st.button("Generate AI Suggestions", key="ai_btn"):
         with st.spinner("Getting AI suggestions..."):
             st.session_state.ai_result = get_gemini_suggestions(
