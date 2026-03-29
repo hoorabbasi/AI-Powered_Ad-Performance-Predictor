@@ -81,11 +81,17 @@ Give:
             request_options={"retry": None}
         )
 
-        # 🔥 FIX: handle empty response
-        if not response or not hasattr(response, "text") or not response.text:
-            return "⚠️ No response from Gemini. Try again later."
+        # ✅ HANDLE EMPTY RESPONSE PROPERLY
+        if not response:
+            return "⚠️ No response from Gemini."
 
-        return response.text
+        if not hasattr(response, "text"):
+            return "⚠️ Invalid response from Gemini."
+
+        if not response.text or response.text.strip() == "":
+            return "⚠️ Gemini returned empty output."
+
+        return response.text.strip()
 
     except ResourceExhausted as e:
         return f"⚠️ Quota exceeded: {e}"
@@ -219,6 +225,6 @@ if st.session_state.predicted_score is not None:
 # --------------------------------------------------
 # Show Gemini output
 # --------------------------------------------------
-if st.session_state.ai_result:
+if st.session_state.ai_result is not None:
     st.subheader("🤖 AI Suggestions")
     st.write(st.session_state.ai_result)
