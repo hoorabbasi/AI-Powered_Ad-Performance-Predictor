@@ -65,15 +65,12 @@ def clean_caption(text):
 - 5 hashtags
 def get_gemini_suggestions(caption, score):
     try:
+        st.write("🚀 Calling Gemini...")
+
         prompt = f"""
 Caption: {caption}
-Predicted Engagement Score: {round(score, 2)}
-
-Give:
-- Short explanation
-- 3 improvement tips
-- Improved caption
-- 5 hashtags
+Score: {score}
+Give suggestions.
 """
 
         response = gemini_model.generate_content(
@@ -81,22 +78,31 @@ Give:
             request_options={"retry": None}
         )
 
-        # ✅ HANDLE EMPTY RESPONSE PROPERLY
-        if not response:
-            return "⚠️ No response from Gemini."
+        # 🔍 FULL DEBUG
+        st.write("RAW RESPONSE:", response)
 
-        if not hasattr(response, "text"):
-            return "⚠️ Invalid response from Gemini."
+        if hasattr(response, "text"):
+            st.write("TEXT FIELD:", response.text)
 
-        if not response.text or response.text.strip() == "":
-            return "⚠️ Gemini returned empty output."
+        if hasattr(response, "candidates"):
+            st.write("CANDIDATES:", response.candidates)
 
-        return response.text.strip()
+        # 🔥 SAFE EXTRACTION
+        try:
+            text = response.text
+            if text:
+                return text
+        except:
+            pass
 
-    except ResourceExhausted as e:
-        return f"⚠️ Quota exceeded: {e}"
+        # fallback extraction
+        try:
+            return response.candidates[0].content.parts[0].text
+        except:
+            return "⚠️ Could not extract response text."
+
     except Exception as e:
-        return f"⚠️ Error: {e}"
+        return f"❌ ERROR: {e}"
 # --------------------------------------------------
 # Load trained ML model
 # --------------------------------------------------
