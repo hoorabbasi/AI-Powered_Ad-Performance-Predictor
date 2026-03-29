@@ -65,12 +65,10 @@ def clean_caption(text):
 - 5 hashtags
 def get_gemini_suggestions(caption, score):
     try:
-        st.write("🚀 Calling Gemini...")
-
         prompt = f"""
 Caption: {caption}
 Score: {score}
-Give suggestions.
+Give short suggestions and hashtags.
 """
 
         response = gemini_model.generate_content(
@@ -78,31 +76,14 @@ Give suggestions.
             request_options={"retry": None}
         )
 
-        # 🔍 FULL DEBUG
-        st.write("RAW RESPONSE:", response)
+        # 🔥 robust extraction
+        if hasattr(response, "text") and response.text:
+            return response.text
 
-        if hasattr(response, "text"):
-            st.write("TEXT FIELD:", response.text)
-
-        if hasattr(response, "candidates"):
-            st.write("CANDIDATES:", response.candidates)
-
-        # 🔥 SAFE EXTRACTION
-        try:
-            text = response.text
-            if text:
-                return text
-        except:
-            pass
-
-        # fallback extraction
-        try:
-            return response.candidates[0].content.parts[0].text
-        except:
-            return "⚠️ Could not extract response text."
+        return response.candidates[0].content.parts[0].text
 
     except Exception as e:
-        return f"❌ ERROR: {e}"
+        return f"⚠️ Error: {e}"
 # --------------------------------------------------
 # Load trained ML model
 # --------------------------------------------------
