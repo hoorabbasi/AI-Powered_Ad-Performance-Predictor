@@ -31,7 +31,7 @@ genai.configure(api_key=API_KEY)
 # --------------------------------------------------
 # Initialize Gemini model ONCE
 # --------------------------------------------------
-gemini_model = genai.GenerativeModel("gemini-2.5-flash")
+gemini_model = genai.GenerativeModel("models/gemini-1.5-flash")
 
 # --------------------------------------------------
 # Download stopwords (safe to call once)
@@ -60,6 +60,9 @@ def clean_caption(text):
 # --------------------------------------------------
 # Gemini suggestion function
 # --------------------------------------------------
+
+- Improved caption
+- 5 hashtags
 def get_gemini_suggestions(caption, score):
     try:
         prompt = f"""
@@ -78,13 +81,16 @@ Give:
             request_options={"retry": None}
         )
 
+        # 🔥 FIX: handle empty response
+        if not response or not hasattr(response, "text") or not response.text:
+            return "⚠️ No response from Gemini. Try again later."
+
         return response.text
 
-    except ResourceExhausted:
-        return "⚠️ Gemini quota exceeded. Please try again later."
+    except ResourceExhausted as e:
+        return f"⚠️ Quota exceeded: {e}"
     except Exception as e:
         return f"⚠️ Error: {e}"
-
 # --------------------------------------------------
 # Load trained ML model
 # --------------------------------------------------
