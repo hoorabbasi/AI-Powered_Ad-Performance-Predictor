@@ -19,7 +19,7 @@ load_dotenv()
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
 except Exception:
-    API_KEY = os.getenv("API_KEY")
+    API_KEY = os.getenv("GEMINI_API_KEY")  # ✅ FIXED
 
 if not API_KEY:
     st.error("Gemini API key not found.")
@@ -31,10 +31,10 @@ genai.configure(api_key=API_KEY)
 # --------------------------------------------------
 # Initialize Gemini model ONCE
 # --------------------------------------------------
-gemini_model = genai.GenerativeModel("models/gemini-1.5-flash")
+gemini_model = genai.GenerativeModel("models/gemini-1.5-flash")  # ✅ FIXED
 
 # --------------------------------------------------
-# Download stopwords (safe to call once)
+# Download stopwords
 # --------------------------------------------------
 nltk.download("stopwords")
 
@@ -60,15 +60,17 @@ def clean_caption(text):
 # --------------------------------------------------
 # Gemini suggestion function
 # --------------------------------------------------
-
-- Improved caption
-- 5 hashtags
 def get_gemini_suggestions(caption, score):
     try:
         prompt = f"""
 Caption: {caption}
-Score: {score}
-Give short suggestions and hashtags.
+Predicted Engagement Score: {round(score, 2)}
+
+Give:
+- Short explanation
+- 3 improvement tips
+- Improved caption
+- 5 hashtags
 """
 
         response = gemini_model.generate_content(
@@ -76,14 +78,23 @@ Give short suggestions and hashtags.
             request_options={"retry": None}
         )
 
-        # 🔥 robust extraction
+        # ✅ HANDLE ALL CASES
         if hasattr(response, "text") and response.text:
-            return response.text
+            return response.text.strip()
 
-        return response.candidates[0].content.parts[0].text
+        if hasattr(response, "candidates") and response.candidates:
+            try:
+                return response.candidates[0].content.parts[0].text.strip()
+            except:
+                pass
 
+        return "⚠️ AI could not generate suggestions right now. Try again later."
+
+    except ResourceExhausted as e:
+        return f"⚠️ Quota exceeded: {e}"
     except Exception as e:
         return f"⚠️ Error: {e}"
+
 # --------------------------------------------------
 # Load trained ML model
 # --------------------------------------------------
@@ -109,10 +120,13 @@ st.title("📊 Ad Performance Predictor")
 st.write("Predict ad engagement and get simple AI suggestions.")
 
 # --------------------------------------------------
-# Session state (prevents reruns)
+# Session state
 # --------------------------------------------------
 if "ai_result" not in st.session_state:
     st.session_state.ai_result = None
+
+if "predicted_score" not in st.session_state:
+    st.session_state.predicted_score = None
 
 # --------------------------------------------------
 # User inputs
@@ -152,20 +166,7 @@ sentiment_score = st.slider(
 )
 
 # --------------------------------------------------
-# Prediction button
-# --------------------------------------------------
-# --------------------------------------------------
-# Session state (prevents reruns)
-# --------------------------------------------------
-if "ai_result" not in st.session_state:
-    st.session_state.ai_result = None
-
-if "predicted_score" not in st.session_state:
-    st.session_state.predicted_score = None
-
-
-# --------------------------------------------------
-# Prediction button
+# Predict button
 # --------------------------------------------------
 if st.button("Predict Engagement", key="predict_btn"):
 
@@ -184,23 +185,20 @@ if st.button("Predict Engagement", key="predict_btn"):
 
     predicted_score = prediction_model.predict(data)[0]
 
-    # ✅ STORE VALUE
     st.session_state.predicted_score = predicted_score
     st.session_state.ai_result = None
 
-
 # --------------------------------------------------
-# Show prediction (persist after rerun)
+# Show prediction
 # --------------------------------------------------
 if st.session_state.predicted_score is not None:
     st.success(f"Predicted Engagement Score: {round(st.session_state.predicted_score, 2)}")
 
-
 # --------------------------------------------------
-# Generate AI Suggestions button (FIXED POSITION)
+# Generate AI Suggestions
 # --------------------------------------------------
 if st.session_state.predicted_score is not None:
-    st.write("DEBUG:", st.session_state.predicted_score)      
+
     if st.button("Generate AI Suggestions", key="ai_btn"):
         with st.spinner("Getting AI suggestions..."):
             st.session_state.ai_result = get_gemini_suggestions(
@@ -208,10 +206,15 @@ if st.session_state.predicted_score is not None:
                 st.session_state.predicted_score
             )
 
-
 # --------------------------------------------------
-# Show Gemini output
+# Show AI output (FIXED CONDITION)
 # --------------------------------------------------
 if st.session_state.ai_result is not None:
     st.subheader("🤖 AI Suggestions")
     st.write(st.session_state.ai_result)
+
+# --------------------------------------------------
+# Footer
+# --------------------------------------------------
+st.markdown("---")
+st.caption("Built with Streamlit + Gemini")
