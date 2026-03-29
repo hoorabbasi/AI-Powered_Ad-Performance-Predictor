@@ -168,7 +168,7 @@ if "predicted_score" not in st.session_state:
 # --------------------------------------------------
 # Prediction button
 # --------------------------------------------------
-if st.button("Predict Engagement"):
+if st.button("Predict Engagement", key="predict_btn"):
 
     cleaned_text = clean_caption(caption)
 
@@ -202,7 +202,7 @@ if st.session_state.predicted_score is not None:
 # --------------------------------------------------
 if st.session_state.predicted_score is not None:
 
-    if st.button("Generate AI Suggestions"):
+    if st.button("Generate AI Suggestions", key="ai_btn"):
         with st.spinner("Getting AI suggestions..."):
             st.session_state.ai_result = get_gemini_suggestions(
                 caption,
