@@ -155,6 +155,19 @@ sentiment_score = st.slider(
 # --------------------------------------------------
 # Prediction button
 # --------------------------------------------------
+# --------------------------------------------------
+# Session state (prevents reruns)
+# --------------------------------------------------
+if "ai_result" not in st.session_state:
+    st.session_state.ai_result = None
+
+if "predicted_score" not in st.session_state:
+    st.session_state.predicted_score = None
+
+
+# --------------------------------------------------
+# Prediction button
+# --------------------------------------------------
 if st.button("Predict Engagement"):
 
     cleaned_text = clean_caption(caption)
@@ -172,16 +185,30 @@ if st.button("Predict Engagement"):
 
     predicted_score = prediction_model.predict(data)[0]
 
-    st.success(f"Predicted Engagement Score: {round(predicted_score, 2)}")
-
+    # ✅ STORE VALUE
+    st.session_state.predicted_score = predicted_score
     st.session_state.ai_result = None
+
+
+# --------------------------------------------------
+# Show prediction (persist after rerun)
+# --------------------------------------------------
+if st.session_state.predicted_score is not None:
+    st.success(f"Predicted Engagement Score: {round(st.session_state.predicted_score, 2)}")
+
+
+# --------------------------------------------------
+# Generate AI Suggestions button (FIXED POSITION)
+# --------------------------------------------------
+if st.session_state.predicted_score is not None:
 
     if st.button("Generate AI Suggestions"):
         with st.spinner("Getting AI suggestions..."):
             st.session_state.ai_result = get_gemini_suggestions(
                 caption,
-                predicted_score
+                st.session_state.predicted_score
             )
+
 
 # --------------------------------------------------
 # Show Gemini output
@@ -189,6 +216,3 @@ if st.button("Predict Engagement"):
 if st.session_state.ai_result:
     st.subheader("🤖 AI Suggestions")
     st.write(st.session_state.ai_result)
-
-st.markdown("---")
-st.caption("Built with Streamlit + Gemini")
