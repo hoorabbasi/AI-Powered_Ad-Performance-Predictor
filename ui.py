@@ -31,7 +31,7 @@ genai.configure(api_key=API_KEY)
 # --------------------------------------------------
 # Initialize Gemini model ONCE
 # --------------------------------------------------
-gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 
 # --------------------------------------------------
 # Download stopwords (safe to call once)
